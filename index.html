@@ -10,62 +10,70 @@
 
   <style>
     /* =========================================
-       1. CSS HACKER INTRO
+       1. CSS HACKER INTRO (MATRIX OVERLOAD)
        ========================================= */
     #terminal-screen {
       position: fixed; inset: 0; z-index: 9999;
       background-color: #050505;
       color: #0f0;
-      font-family: 'Fira Code', monospace;
+      font-family: 'Fira Code', monospace; /* Font cũ bạn thích */
       font-size: 13px;
       padding: 20px;
       overflow-y: auto;
       display: flex; flex-direction: column; justify-content: flex-start;
     }
 
-    /* Hiệu ứng màn hình CRT cũ */
+    /* Scanlines cũ */
     #terminal-screen::after {
       content: ""; position: absolute; inset: 0;
       background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
       pointer-events: none; z-index: 10;
     }
 
-    /* Dòng lệnh */
-    .log-line { display: block; margin-bottom: 5px; word-wrap: break-word; }
-    .text-danger { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
-    .text-warning { color: #ffcc00; }
+    .log-line { display: block; margin-bottom: 2px; word-wrap: break-word; line-height: 1.3; }
+    
+    /* Màu sắc */
     .text-system { color: #00f3ff; font-weight: bold; }
-    .cursor {
-      display: inline-block; width: 8px; height: 15px; background: #0f0;
-      animation: blink 0.8s infinite; vertical-align: sub; margin-left: 5px;
+    .text-warning { color: #ffcc00; }
+    .text-danger { color: #ff003c; text-shadow: 0 0 5px #ff003c; }
+    .text-matrix { color: rgba(0, 255, 0, 0.6); font-size: 11px; } /* Code chạy nhanh */
+    
+    /* Dòng cảnh báo Tiếng Anh nền đỏ */
+    .simulation-alert {
+        background: #b91c1c; color: #fff; padding: 4px 8px;
+        font-weight: bold; display: inline-block; margin-bottom: 20px;
+        font-size: 14px; border: 1px solid #ff5555;
     }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-    /* Thanh Loading */
-    .progress-wrapper { margin: 10px 0 20px 0; display: none; }
-    .progress-label { margin-bottom: 5px; display: block; font-size: 12px; }
+    /* Thanh Loading Kiểu Cũ (Đơn giản) */
+    .progress-wrapper { margin: 15px 0; display: none; }
     .progress-track { width: 100%; max-width: 400px; height: 12px; border: 1px solid #0f0; padding: 1px; }
     .progress-bar { width: 0%; height: 100%; background: #0f0; box-shadow: 0 0 10px #0f0; transition: width 0.1s linear; }
 
     /* Hộp giải mã Password */
-    #password-box { margin-top: 20px; border: 1px solid #0f0; padding: 15px; max-width: 400px; display: none; background: rgba(0,20,0,0.5); }
-    #decoding-text { font-size: 20px; font-weight: bold; letter-spacing: 3px; color: #fff; }
-
-    /* Hiệu ứng nhấp nháy chuyển cảnh */
-    .flicker-effect {
-      animation: flickerAnim 0.8s forwards;
+    #password-box { 
+      margin-top: 20px; border: 1px solid #0f0; padding: 15px; 
+      max-width: 450px; display: none; background: rgba(0,20,0,0.8); 
     }
-    @keyframes flickerAnim {
-      0% { opacity: 1; } 20% { opacity: 0; } 40% { opacity: 1; } 60% { opacity: 0; } 80% { opacity: 1; } 100% { opacity: 0; }
+    #decoding-text { font-size: 22px; font-weight: bold; letter-spacing: 2px; color: #fff; }
+
+    /* Hiệu ứng nhiễu Glitch */
+    .glitch-out { animation: glitchAnim 0.5s forwards; }
+    @keyframes glitchAnim {
+      0% { opacity: 1; }
+      20% { opacity: 0.8; transform: skewX(-20deg); filter: invert(1); }
+      40% { opacity: 1; transform: skewX(20deg); }
+      60% { opacity: 0; transform: skewX(0deg); }
+      100% { opacity: 0; display: none;}
     }
 
-    /* Ẩn trang chính ban đầu */
-    #main-content { display: none; opacity: 0; transition: opacity 1s ease; }
+    /* Ẩn trang chính */
+    #main-content { display: none; opacity: 0; transition: opacity 1.5s ease; }
     #main-content.visible { opacity: 1; }
 
 
     /* =========================================
-       2. CSS GIAO DIỆN CHÍNH (ĐẸP)
+       2. CSS GIAO DIỆN CHÍNH (GIỮ NGUYÊN)
        ========================================= */
     :root{
       --bg-dark: #f0f9ff; --text-main: #0f172a; --text-muted: #475569;
@@ -189,17 +197,20 @@
 
 <body>
   <div id="terminal-screen">
+    <div class="simulation-alert">
+      ⚠️ SIMULATION MODE ACTIVE. VISUAL EFFECTS ONLY.
+    </div>
+    
     <div id="console-output"></div>
     
     <div class="progress-wrapper" id="progress-wrapper">
-      <span class="progress-label" id="progress-text">Downloading...</span>
       <div class="progress-track">
         <div class="progress-bar" id="hack-bar"></div>
       </div>
     </div>
 
     <div id="password-box">
-      <span class="crack-label" style="display:block; margin-bottom:5px; font-size:12px; opacity:0.8">DECRYPTING ROOT PASSWORD:</span>
+      <span style="display:block; margin-bottom:5px; font-size:12px; color:#0f0">DECRYPTING ROOT KEY:</span>
       <div id="decoding-text"></div>
     </div>
   </div>
@@ -363,7 +374,7 @@
 
   <script>
     /* =========================================
-       LOGIC HACKER INTRO (FINAL VERSION)
+       LOGIC HACKER INTRO (MATRIX OVERLOAD)
        ========================================= */
     const outputDiv = document.getElementById('console-output');
     const terminal = document.getElementById('terminal-screen');
@@ -372,38 +383,29 @@
     const crackText = document.getElementById('decoding-text');
     const progressBar = document.getElementById('hack-bar');
     const progressWrapper = document.getElementById('progress-wrapper');
-    const progressText = document.getElementById('progress-text');
 
-    // Kịch bản chạy (Kết hợp Log và Thanh Loading)
     const sequence = [
-      { type: 'log', text: "Initializing exploit framework...", delay: 200 },
-      { type: 'log', text: "Connecting to server 192.168.0.1:443...", delay: 500 },
+      { type: 'log', text: "Initializing kernel...", delay: 200 },
+      { type: 'log', text: "Connecting to server 192.168.0.1...", delay: 400 },
       { type: 'log', text: "Connection established.", delay: 200, color: "text-system" },
-      { type: 'log', text: "Bypassing firewall rules...", delay: 600 },
-      { type: 'log', text: "Firewall disabled [✓]", delay: 300, color: "text-system" },
+      { type: 'log', text: "Scanning Ports...", delay: 500 },
+      { type: 'log', text: "Open ports: 80, 443, 22.", delay: 300 },
+      { type: 'log', text: "SSH Handshake...", delay: 400 },
+      { type: 'bar', duration: 1500 }, // Thanh chạy
       
-      // Chạy thanh loading lần 1
-      { type: 'bar', text: "Downloading Exploit Tools...", duration: 1500 },
-      
-      { type: 'log', text: "Tools loaded. Scanning for vulnerabilities...", delay: 500 },
-      { type: 'log', text: "Vuln found: Buffer Overflow in sshd.", delay: 400, color: "text-warning" },
-      { type: 'log', text: "Injecting payload...", delay: 800 },
-      
-      // Chạy thanh loading lần 2
-      { type: 'bar', text: "Uploading Payload...", duration: 1200 },
+      // CODE DUMP (Chạy tràn màn hình)
+      { type: 'code-dump', count: 120, speed: 5 },
 
-      { type: 'log', text: "Payload delivered. Escalating privileges...", delay: 600 },
-      { type: 'log', text: "Access denied. Root password required.", delay: 400, color: "text-danger" },
-      { type: 'log', text: "Initiating Brute-Force attack...", delay: 600 },
-      
-      // Chạy hiệu ứng bẻ khóa password
-      { type: 'crack', duration: 3000 } 
+      { type: 'log', text: "Access denied. Root password required.", delay: 300, color: "text-danger" },
+      { type: 'log', text: "Bypassing Security Layer...", delay: 600 },
+      { type: 'log', text: "Injection Successful.", delay: 400, color: "text-system" },
+      { type: 'crack', duration: 2500 }
     ];
 
     let seqIndex = 0;
 
     function runSequence() {
-      if (seqIndex >= sequence.length) return; // Kết thúc sequence
+      if (seqIndex >= sequence.length) return;
 
       const item = sequence[seqIndex];
 
@@ -412,101 +414,91 @@
         p.className = 'log-line ' + (item.color || '');
         p.innerHTML = "> " + item.text;
         outputDiv.appendChild(p);
-        terminal.scrollTop = terminal.scrollHeight; // Cuộn xuống cuối
-        
+        terminal.scrollTop = terminal.scrollHeight;
         seqIndex++;
         setTimeout(runSequence, item.delay);
       } 
       else if (item.type === 'bar') {
         progressWrapper.style.display = 'block';
-        progressText.innerText = item.text;
         progressBar.style.width = '0%';
-        
-        setTimeout(() => {
-          progressBar.style.transition = `width ${item.duration}ms linear`;
-          progressBar.style.width = '100%';
-        }, 50);
-
-        setTimeout(() => {
-          progressWrapper.style.display = 'none'; // Ẩn khi xong
-          seqIndex++;
-          runSequence();
-        }, item.duration + 200);
+        setTimeout(() => { progressBar.style.transition = `width ${item.duration}ms linear`; progressBar.style.width = '100%'; }, 50);
+        setTimeout(() => { progressWrapper.style.display = 'none'; seqIndex++; runSequence(); }, item.duration + 200);
+      }
+      else if (item.type === 'code-dump') {
+        // Chạy một lượng lớn code rác để tràn màn hình
+        let dumpCount = 0;
+        const dumpInterval = setInterval(() => {
+          const p = document.createElement('span');
+          p.className = 'log-line text-matrix';
+          // Tạo chuỗi hex/binary ngẫu nhiên
+          p.innerText = Math.random().toString(2).substring(2) + " " + Math.random().toString(16).substring(2).toUpperCase();
+          outputDiv.appendChild(p);
+          terminal.scrollTop = terminal.scrollHeight; // Luôn cuộn xuống
+          dumpCount++;
+          if(dumpCount > item.count) {
+             clearInterval(dumpInterval);
+             seqIndex++;
+             runSequence();
+          }
+        }, item.speed);
       }
       else if (item.type === 'crack') {
         startCracking();
       }
     }
 
-    // Hiệu ứng bẻ khóa mật khẩu
     function startCracking() {
       crackBox.style.display = 'block';
       const targetPassword = "HGB_ADMIN_ACCESS";
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
       let iterations = 0;
-      
-      // Tự động cuộn xuống để thấy hộp password
       terminal.scrollTop = terminal.scrollHeight;
 
       const interval = setInterval(() => {
         let displayStr = "";
-        const crackedLength = Math.floor(iterations / 4); // Tốc độ lộ chữ
-
+        const crackedLength = Math.floor(iterations / 4); 
         for (let i = 0; i < targetPassword.length; i++) {
-          if (i < crackedLength) {
-            displayStr += targetPassword[i];
-          } else {
-            displayStr += chars[Math.floor(Math.random() * chars.length)];
-          }
+          if (i < crackedLength) displayStr += targetPassword[i];
+          else displayStr += chars[Math.floor(Math.random() * chars.length)];
         }
-
         crackText.innerText = displayStr;
-
         if (crackedLength >= targetPassword.length) {
           clearInterval(interval);
           crackText.style.color = "#0f0";
           crackText.style.textShadow = "0 0 10px #0f0";
           
+          // Thông báo thành công
           const successMsg = document.createElement('span');
           successMsg.className = "log-line text-system";
           successMsg.style.marginTop = "20px";
-          successMsg.innerText = "> ACCESS GRANTED. SYSTEM UNLOCKED.";
+          successMsg.innerText = "> ACCESS GRANTED.";
           outputDiv.appendChild(successMsg);
           terminal.scrollTop = terminal.scrollHeight;
           
-          // Kích hoạt hiệu ứng nhấp nháy rồi vào web
-          setTimeout(triggerFlickerAndEnter, 1000);
+          setTimeout(triggerGlitchAndEnter, 1000);
         }
         iterations++;
       }, 50);
     }
 
-    function triggerFlickerAndEnter() {
-      // Thêm class nhấp nháy
-      terminal.classList.add('flicker-effect');
-      
+    function triggerGlitchAndEnter() {
+      terminal.classList.add('glitch-out');
       setTimeout(() => {
-        terminal.style.display = 'none'; // Ẩn màn hình hack
-        
-        // Hiện web chính & CUỘN LÊN ĐẦU TRANG
+        terminal.style.display = 'none'; 
         mainContent.style.display = 'block';
-        window.scrollTo(0, 0); // Quan trọng: Cuộn lên đầu
-        
-        // Fade in nhẹ nhàng
+        window.scrollTo(0, 0); 
         setTimeout(() => {
           mainContent.classList.add('visible');
-          startMainEffects(); // Kích hoạt hiệu ứng của trang chính
+          startMainEffects(); 
         }, 50);
-        
-      }, 800); // Chờ hết hiệu ứng nhấp nháy
+      }, 600);
     }
 
-    // Bắt đầu chạy
     window.onload = runSequence;
 
 
     /* =========================================
-       LOGIC WEB CHÍNH (GIỮ NGUYÊN)
+       2. JS WEB CHÍNH (GIỮ NGUYÊN)
        ========================================= */
     function startMainEffects() {
       document.getElementById("year").innerText = new Date().getFullYear();
